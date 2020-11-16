@@ -1,0 +1,108 @@
+# GAME OF LIFE 3D BOX SIMULATION
+# VERSION 0.1
+# DATE 2020.05
+# AUTH. KRZYSZTOF BOCHNIAK 
+
+# IMPORTS
+
+import rhinoscriptsyntax as rs
+import Rhino.Geometry as rg
+from itertools import product
+
+# TEST_BOX DIMMENTIONS:
+
+width = int(width)  # num of rows in X dimmention
+length = int(length)  # num of rows in Y dimmention
+height = int(height)  # num of rows in Z dimmention
+current_state = {}
+
+# ALIVE DEAD RULE:
+
+rule = int(rule)  # min. number of alive cells in range of tested cell
+test_range = int(test_range)  # test range as offset from base point coords
+# Create list of possible offsets
+possible_offsets = [i for i in product(
+    range(-test_range, test_range+1), repeat=3) if i != (0, 0, 0)]
+
+
+
+def initialize_cube():
+
+    global current_state 
+    global previous_state
+    from random import randint as ri
+    """Initialize box with width, length, height (w,l,h) with random population"""
+    global width
+    global length
+    global height
+
+    def a(): return bool(ri(0, 1))  # random state generator
+
+    if width and length and height > 0:
+        for x in range(width):
+            for y in range(length):
+                for z in range(height):
+                    previous_state.update({(x, y, z): a()})
+    else:
+        print('Error: Width, length, height must be positive number greater than 0')
+    current_state = previous_state
+
+
+def new_state():
+    """Test box against rule in range"""
+    global rule
+    global possible_offsets
+    global current_state
+    global previous_state
+
+    def test_point(point):
+        global current_state
+        global previous_state
+        """Tests if test point exists and if its state is \n
+        alive or dead according to rule"""
+        # Actual offsets for tested point (3d range)
+        actual_offsets = [(point[0]+k[0], point[1]+k[1], point[2]+k[2])
+                          for k in possible_offsets]
+        # Number of alive neighbors in tested offset vs rule
+        alive_neighbors = 0
+        # Validation of neighbor (dead/alive)
+        if point in previous_state and previous_state[point] == True:
+            for i in actual_offsets:
+                if i in previous_state and previous_state[i] == True:
+                    alive_neighbors += 1
+                else:
+                    pass
+        else:
+            pass
+        # Test if current state of point is dead/alive
+        if alive_neighbors >= rule:
+            return(True)
+        else:
+            return(False)
+
+    # Test each point in previous state and set current state
+    for i in previous_state:
+        current_state[i] = test_point(i)
+    previous_state = current_state
+
+
+def return_points():
+    global current_state
+
+    alive_points = [i for i in current_state if current_state[i] == True]
+    dead_points_list = [i for i in current_state if current_state[i] == False]
+    points = [rg.Point3d(i[0],i[1],i[2]) for i in alive_points]
+    dead_points = [rg.Point3d(i[0],i[1],i[2]) for i in dead_points_list]
+    
+    return(points), (dead_points)
+
+if current_state and previous_state in globals() or reset == False:
+    new_state()
+    points = return_points()[0]
+    dead_points = return_points()[1]
+else:
+    current_state = {}
+    previous_state = {}
+    initialize_cube()
+    print('initializing script')
+
